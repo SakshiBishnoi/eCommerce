@@ -3,15 +3,33 @@ import Product from '../models/Product';
 
 const router = express.Router();
 
-// Get all products
-router.get('/', async (_req: Request, res: Response) => {
-  const products = await Product.find();
-  res.json(products);
+// Paginated, filterable products endpoint
+router.get('/', async (req: Request, res: Response) => {
+  const { search = '', category, offset = 0, limit = 20 } = req.query;
+  const query: any = {};
+
+  if (category) {
+    query.category = category;
+  }
+  if (search) {
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  const total = await Product.countDocuments(query);
+  const products = await Product.find(query)
+    .skip(Number(offset))
+    .limit(Number(limit))
+    .populate('category');
+
+  res.json({ products, total });
 });
 
 // Get product by id
 router.get('/:id', async (req: Request, res: Response) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id).populate('category');
   if (!product) return res.status(404).json({ message: 'Not found' });
   res.json(product);
 });

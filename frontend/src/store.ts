@@ -1,6 +1,4 @@
 // Use JSON imports for products and categories
-import productsData from './products.json';
-import categories from './categories.json';
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type Product = {
@@ -17,7 +15,7 @@ export type Product = {
 
 const productsSlice = createSlice({
   name: 'products',
-  initialState: productsData as Product[],
+  initialState: [] as Product[],
   reducers: {},
 });
 
