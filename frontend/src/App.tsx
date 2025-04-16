@@ -1,6 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route, Link as LinkRouter } from 'react-router-dom';
+import { Box, Flex, Heading, Button, Container } from '@chakra-ui/react';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -11,18 +11,34 @@ import { motion, AnimatePresence } from 'framer-motion';
 const App: React.FC = () => {
   return (
     <Router>
-      <AppBar position="static">
-        <Toolbar>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            eCommerce
-          </Typography>
-          <Button color="inherit" component={Link} to="/">Home</Button>
-          <Button color="inherit" component={Link} to="/products">Products</Button>
-          <Button color="inherit" component={Link} to="/cart">Cart</Button>
-          <Button color="inherit" component={Link} to="/login">Login/Register</Button>
-        </Toolbar>
-      </AppBar>
-      <Container sx={{ mt: 4 }}>
+      <Box as="nav" bg="blue.600" color="white" px={4} py={2} boxShadow="md">
+        <Flex align="center" maxW="1200px" mx="auto">
+          <LinkRouter to="/" style={{ flex: 1, textDecoration: 'none', color: 'white' }}>
+            <Heading size="md">eCommerce</Heading>
+          </LinkRouter>
+          <LinkRouter to="/" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
+              Home
+            </Button>
+          </LinkRouter>
+          <LinkRouter to="/products" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
+              Products
+            </Button>
+          </LinkRouter>
+          <LinkRouter to="/cart" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
+              Cart
+            </Button>
+          </LinkRouter>
+          <LinkRouter to="/login" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" _hover={{ bg: 'blue.700' }}>
+              Login/Register
+            </Button>
+          </LinkRouter>
+        </Flex>
+      </Box>
+      <Container maxW="container.lg" mt={8}>
         <AnimatePresence mode="wait">
           <Routes>
             <Route path="/" element={<PageWrapper><Home /></PageWrapper>} />

@@ -1,18 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Skeleton from '@mui/material/Skeleton';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  SimpleGrid,
+  Skeleton,
+  Input,
+} from '@chakra-ui/react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, addToCart } from '../store';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ProductList: React.FC = () => {
   const products = useSelector((state: RootState) => state.products);
@@ -41,32 +40,37 @@ const ProductList: React.FC = () => {
     return filtered;
   }, [products, selectedCategory, search]);
 
+  // Fallback colors
+  const cardBg = 'white';
+  const cardBorder = 'gray.200';
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Box maxW="container.lg" mx="auto" mt={4} px={2}>
+      <Heading as="h2" size="lg" mb={4}>
         Product List
-      </Typography>
-      <TextField
-        label="Search products..."
-        variant="outlined"
-        size="small"
-        fullWidth
-        sx={{ mb: 2 }}
+      </Heading>
+      <Input
+        placeholder="Search products..."
+        size="md"
+        mb={4}
         value={search}
         onChange={e => setSearch(e.target.value)}
       />
-      <Tabs
-        value={selectedCategory}
-        onChange={(_e, v) => setSelectedCategory(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 3, borderRadius: 2, boxShadow: 1, bgcolor: 'background.paper' }}
-        TabIndicatorProps={{ style: { height: 4, borderRadius: 2 } }}
-      >
+      <Box display="flex" gap={2} mb={6} overflowX="auto">
         {categories.map((cat) => (
-          <Tab key={cat} value={cat} label={cat} sx={{ fontWeight: 600, textTransform: 'none' }} />
+          <Button
+            key={cat}
+            colorScheme={selectedCategory === cat ? 'blue' : 'gray'}
+            variant={selectedCategory === cat ? 'solid' : 'outline'}
+            onClick={() => setSelectedCategory(cat)}
+            fontWeight={600}
+            textTransform="none"
+            minW="90px"
+          >
+            {cat}
+          </Button>
         ))}
-      </Tabs>
+      </Box>
       <motion.div
         key={selectedCategory + search}
         initial={{ opacity: 0, y: 20 }}
@@ -74,7 +78,7 @@ const ProductList: React.FC = () => {
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.4 }}
       >
-        <Box display="flex" flexWrap="wrap" gap={3} justifyContent={{ xs: 'center', md: 'flex-start' }}>
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap={6}>
           <AnimatePresence>
             {filteredProducts.map((product: any) => (
               <motion.div
@@ -84,33 +88,41 @@ const ProductList: React.FC = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
+                whileHover={{ scale: 1.03 }}
               >
-                <Card
-                  sx={{
-                    width: 300,
-                    flex: '1 1 300px',
-                    cursor: 'pointer',
-                    transition: 'box-shadow 0.2s',
-                    boxShadow: 3,
-                    '&:hover': { boxShadow: 8, borderColor: 'primary.main' },
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'grey.200',
-                    position: 'relative',
-                  }}
-                  component={Link}
-                  to={`/products/${product.id}`}
-                >
-                  <CardContent>
-                    <Skeleton variant="rectangular" width={210} height={118} sx={{ mb: 1, borderRadius: 2 }} />
-                    <Typography variant="h6" mt={2}>{product.name}</Typography>
-                    <Typography color="text.secondary">{product.category}</Typography>
-                    <Typography color="primary" fontWeight={700} mb={1}>${product.price}</Typography>
+                <RouterLink to={`/products/${product.id}`} style={{ textDecoration: 'none' }}>
+                  <Box
+                    bg={cardBg}
+                    borderWidth="1px"
+                    borderColor={cardBorder}
+                    borderRadius="xl"
+                    boxShadow="md"
+                    p={4}
+                    h={"340px"}
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="space-between"
+                    position="relative"
+                    _hover={{ boxShadow: 'xl', borderColor: 'blue.400', textDecoration: 'none' }}
+                    transition="box-shadow 0.2s, border-color 0.2s"
+                  >
+                    <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
+                      <Skeleton height="100px" width="180px" borderRadius="md" />
+                    </Box>
+                    <Text fontWeight={700} mb={1}>
+                      {product.name}
+                    </Text>
+                    <Box mb={2} px={2} py={1} bg="gray.100" borderRadius="md" fontWeight={500} fontSize="sm" w="fit-content">
+                      {product.category}
+                    </Box>
+                    <Text color="blue.500" fontWeight={700} fontSize="lg" mb={2}>
+                      ${product.price}
+                    </Text>
                     <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      sx={{ position: 'absolute', bottom: 16, right: 16, zIndex: 2 }}
+                      colorScheme="blue"
+                      size="sm"
+                      w="full"
+                      mt={2}
                       onClick={e => {
                         e.preventDefault();
                         dispatch(addToCart({ id: product.id, name: product.name, price: product.price }));
@@ -118,14 +130,14 @@ const ProductList: React.FC = () => {
                     >
                       Add to Cart
                     </Button>
-                  </CardContent>
-                </Card>
+                  </Box>
+                </RouterLink>
               </motion.div>
             ))}
           </AnimatePresence>
-        </Box>
+        </SimpleGrid>
       </motion.div>
-    </Container>
+    </Box>
   );
 };
 
