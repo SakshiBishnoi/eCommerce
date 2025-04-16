@@ -1,11 +1,22 @@
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+const categories = [
+  'Electronics', 'Books', 'Clothing', 'Home', 'Toys', 'Sports', 'Beauty', 'Automotive', 'Garden', 'Music', 'Grocery',
+];
+
+const productsData = Array.from({ length: 120 }, (_, i) => {
+  const category = categories[i % categories.length];
+  return {
+    id: i + 1,
+    name: `${category} Product ${i + 1}`,
+    price: parseFloat((Math.random() * 100 + 10).toFixed(2)),
+    category,
+  };
+});
+
 const productsSlice = createSlice({
   name: 'products',
-  initialState: [
-    { id: 1, name: 'Product 1', price: 49.99 },
-    { id: 2, name: 'Product 2', price: 99.99 },
-  ],
+  initialState: productsData,
   reducers: {},
 });
 
