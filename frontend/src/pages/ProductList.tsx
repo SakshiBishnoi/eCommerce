@@ -12,15 +12,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, addToCart } from '../store';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import categories from '../categories.json';
 
 const ProductList: React.FC = () => {
   const products = useSelector((state: RootState) => state.products);
   const dispatch = useDispatch();
-  // Extract unique categories
-  const categories = useMemo(() => {
-    const cats = Array.from(new Set(products.map((p: any) => p.category)));
-    return ['All', ...cats];
-  }, [products]);
+
+  // Use categories.json for category list
+  const categoryNames = useMemo(() => ['All', ...categories.map((c: any) => c.name)], []);
 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
@@ -29,12 +28,12 @@ const ProductList: React.FC = () => {
   const filteredProducts = useMemo(() => {
     let filtered = selectedCategory === 'All'
       ? products
-      : products.filter((p: any) => p.category === selectedCategory);
+      : products.filter((p: any) => p.categoryName === selectedCategory);
     if (search.trim()) {
       const s = search.trim().toLowerCase();
       filtered = filtered.filter((p: any) =>
         p.name.toLowerCase().includes(s) ||
-        p.category.toLowerCase().includes(s)
+        p.categoryName.toLowerCase().includes(s)
       );
     }
     return filtered;
@@ -57,7 +56,7 @@ const ProductList: React.FC = () => {
         onChange={e => setSearch(e.target.value)}
       />
       <Box display="flex" gap={2} mb={6} overflowX="auto">
-        {categories.map((cat) => (
+        {categoryNames.map((cat) => (
           <Button
             key={cat}
             colorScheme={selectedCategory === cat ? 'blue' : 'gray'}
@@ -107,13 +106,21 @@ const ProductList: React.FC = () => {
                     transition="box-shadow 0.2s, border-color 0.2s"
                   >
                     <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
-                      <Skeleton height="100px" width="180px" borderRadius="md" />
+                      {product.image ? (
+                        <Box bg="gray.100" borderRadius="md" height="100px" width="180px" display="flex" alignItems="center" justifyContent="center" overflow="hidden">
+                          <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </Box>
+                      ) : (
+                        <Box bg="gray.100" borderRadius="md" height="100px" width="180px" display="flex" alignItems="center" justifyContent="center">
+                          <Text color="gray.400">Image</Text>
+                        </Box>
+                      )}
                     </Box>
                     <Text fontWeight={700} mb={1}>
                       {product.name}
                     </Text>
                     <Box mb={2} px={2} py={1} bg="gray.100" borderRadius="md" fontWeight={500} fontSize="sm" w="fit-content">
-                      {product.category}
+                      {product.categoryName}
                     </Box>
                     <Text color="blue.500" fontWeight={700} fontSize="lg" mb={2}>
                       ${product.price}

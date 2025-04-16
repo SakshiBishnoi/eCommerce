@@ -1,30 +1,31 @@
+// Use JSON imports for products and categories
+import productsData from './products.json';
+import categories from './categories.json';
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-const categories = [
-  'Electronics', 'Books', 'Clothing', 'Home', 'Toys', 'Sports', 'Beauty', 'Automotive', 'Garden', 'Music', 'Grocery',
-];
-
-const productsData = Array.from({ length: 120 }, (_, i) => {
-  const category = categories[i % categories.length];
-  return {
-    id: i + 1,
-    name: `${category} Product ${i + 1}`,
-    price: parseFloat((Math.random() * 100 + 10).toFixed(2)),
-    category,
-  };
-});
+export type Product = {
+  id: string;
+  name: string;
+  price: number;
+  categoryId: string;
+  categoryName: string;
+  description: string;
+  image: string;
+  stock: number;
+  createdAt: string;
+};
 
 const productsSlice = createSlice({
   name: 'products',
-  initialState: productsData,
+  initialState: productsData as Product[],
   reducers: {},
 });
 
-const cartSlice = createSlice({
+export const cartSlice = createSlice({
   name: 'cart',
-  initialState: [] as { id: number; name: string; price: number; quantity: number }[],
+  initialState: [] as { id: string; name: string; price: number; quantity: number }[],
   reducers: {
-    addToCart: (state, action: PayloadAction<{ id: number; name: string; price: number }>) => {
+    addToCart: (state, action: PayloadAction<{ id: string; name: string; price: number }>) => {
       const item = state.find(i => i.id === action.payload.id);
       if (item) {
         item.quantity += 1;
@@ -32,7 +33,7 @@ const cartSlice = createSlice({
         state.push({ ...action.payload, quantity: 1 });
       }
     },
-    removeFromCart: (state, action: PayloadAction<number>) => {
+    removeFromCart: (state, action: PayloadAction<string>) => {
       return state.filter(i => i.id !== action.payload);
     },
     clearCart: () => [],
@@ -78,4 +79,6 @@ export const store = configureStore({
 });
 
 export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch; 
+export type AppDispatch = typeof store.dispatch;
+
+export { productsSlice }; 

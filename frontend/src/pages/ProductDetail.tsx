@@ -1,29 +1,62 @@
 import React from 'react';
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Skeleton from '@mui/material/Skeleton';
-import { Link } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, addToCart } from '../store';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  Flex,
+  Skeleton,
+  useToast,
+} from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
-const ProductDetail: React.FC = () => (
-  <Container maxWidth="md" sx={{ mt: 4 }}>
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <Button component={Link} to="/products" variant="outlined" sx={{ mb: 2 }}>
-        Back to Products
-      </Button>
-      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} gap={4}>
-        <Skeleton variant="rectangular" width={300} height={200} />
-        <Box>
-          <Typography variant="h4" gutterBottom>Product Title</Typography>
-          <Typography color="text.secondary" gutterBottom>Product description goes here...</Typography>
-          <Typography variant="h6" color="primary">$99.99</Typography>
-          <Button variant="contained" color="primary" sx={{ mt: 2 }}>Add to Cart</Button>
-        </Box>
+const ProductDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const product = useSelector((state: RootState) =>
+    state.products.find((p: any) => p.id === id)
+  );
+  const dispatch = useDispatch();
+  const toast = useToast();
+
+  if (!product) {
+    return (
+      <Box maxW="container.md" mx="auto" mt={4}>
+        <Text>Product not found.</Text>
+        <Button as={RouterLink} to="/products" mt={4} colorScheme="blue">
+          Back to Products
+        </Button>
       </Box>
-    </motion.div>
-  </Container>
-);
+    );
+  }
+
+  const handleAddToCart = () => {
+    dispatch(addToCart({ id: product.id, name: product.name, price: product.price }));
+    toast({ title: 'Added to cart!', status: 'success', duration: 1500, isClosable: true });
+  };
+
+  return (
+    <Box maxW="container.md" mx="auto" mt={4}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+        <Button as={RouterLink} to="/products" variant="outline" mb={4} colorScheme="blue">
+          Back to Products
+        </Button>
+        <Flex direction={{ base: 'column', md: 'row' }} gap={8}>
+          <Skeleton height="200px" width="300px" borderRadius="md" />
+          <Box>
+            <Heading as="h2" size="lg" mb={2}>{product.name}</Heading>
+            <Text color="gray.500" mb={2}>{product.categoryName}</Text>
+            <Text fontSize="xl" color="blue.500" fontWeight="bold" mb={2}>${product.price}</Text>
+            <Button colorScheme="blue" mt={2} onClick={handleAddToCart}>
+              Add to Cart
+            </Button>
+          </Box>
+        </Flex>
+      </motion.div>
+    </Box>
+  );
+};
 
 export default ProductDetail; 

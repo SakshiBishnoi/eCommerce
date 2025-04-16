@@ -1,41 +1,85 @@
 import React from 'react';
-import Container from '@mui/material/Container';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import Skeleton from '@mui/material/Skeleton';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, removeFromCart, clearCart } from '../store';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  Flex,
+  Card,
+  CardBody,
+  Stack,
+  Divider,
+  useToast,
+} from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 
-const Cart: React.FC = () => (
-  <Container maxWidth="md" sx={{ mt: 4 }}>
-    <Typography variant="h4" gutterBottom>
-      Cart
-    </Typography>
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <Box display="flex" flexDirection="column" gap={2}>
-        {[1, 2].map((id) => (
-          <Card key={id}>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <Skeleton variant="rectangular" width={80} height={60} />
-                <Box flex={1}>
-                  <Typography variant="h6">Product {id}</Typography>
-                  <Typography color="text.secondary">$49.99</Typography>
-                </Box>
-                <Button variant="outlined" color="secondary">Remove</Button>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
-      <Box mt={4} textAlign="right">
-        <Typography variant="h6">Total: $99.98</Typography>
-        <Button variant="contained" color="primary" sx={{ mt: 2 }}>Checkout</Button>
-      </Box>
-    </motion.div>
-  </Container>
-);
+const Cart: React.FC = () => {
+  const cart = useSelector((state: RootState) => state.cart);
+  const products = useSelector((state: RootState) => state.products);
+  const dispatch = useDispatch();
+  const toast = useToast();
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  // Find product details for each cart item (for category, image, etc.)
+  const getProductDetails = (id: string) => products.find((p: any) => p.id === id);
+
+  const handleRemove = (id: string) => {
+    dispatch(removeFromCart(id));
+  };
+
+  const handleCheckout = () => {
+    dispatch(clearCart());
+    toast({ title: 'Checkout successful!', status: 'success', duration: 2000, isClosable: true });
+  };
+
+  return (
+    <Box maxW="container.md" mx="auto" mt={4}>
+      <Heading as="h2" size="lg" mb={4}>Cart</Heading>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+        {cart.length === 0 ? (
+          <Text color="gray.500">Your cart is empty.</Text>
+        ) : (
+          <Stack spacing={4}>
+            {cart.map(item => {
+              const product = getProductDetails(item.id);
+              return (
+                <Card key={item.id}>
+                  <CardBody>
+                    <Flex align="center" gap={4}>
+                      {product && product.image ? (
+                        <Box boxSize="80px" bg="gray.100" borderRadius="md" overflow="hidden">
+                          <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </Box>
+                      ) : (
+                        <Box boxSize="80px" bg="gray.100" borderRadius="md" />
+                      )}
+                      <Box flex={1}>
+                        <Text fontWeight="bold">{item.name}</Text>
+                        {product && product.categoryName && (
+                          <Text color="gray.400" fontSize="sm">{product.categoryName}</Text>
+                        )}
+                        <Text color="gray.500">${item.price} x {item.quantity}</Text>
+                      </Box>
+                      <Button colorScheme="red" variant="outline" onClick={() => handleRemove(item.id)}>
+                        Remove
+                      </Button>
+                    </Flex>
+                  </CardBody>
+                </Card>
+              );
+            })}
+            <Divider />
+            <Flex justify="flex-end" align="center" gap={4}>
+              <Text fontWeight="bold">Total: ${total.toFixed(2)}</Text>
+              <Button colorScheme="blue" onClick={handleCheckout}>Checkout</Button>
+            </Flex>
+          </Stack>
+        )}
+      </motion.div>
+    </Box>
+  );
+};
 
 export default Cart; 
