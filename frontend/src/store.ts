@@ -23,72 +23,132 @@ const productsSlice = createSlice({
 export const fetchCartFromBackend = createAsyncThunk(
   'cart/fetchFromBackend',
   async (_, { rejectWithValue }) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/cart', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return rejectWithValue('Failed to fetch cart');
-    const data = await res.json();
-    // Convert backend cart items to frontend format
-    return (data.items || []).map((item: any) => ({
-      id: item.product._id || item.product,
-      name: item.product.name,
-      price: item.product.price,
-      quantity: item.quantity,
-    }));
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return [];
+
+      const res = await fetch('/api/cart', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        return rejectWithValue(errorData?.message || 'Failed to fetch cart');
+      }
+      
+      const data = await res.json();
+      // Convert backend cart items to frontend format
+      return (data.items || []).map((item: any) => ({
+        id: item.product._id || item.product,
+        name: item.product.name || 'Unknown Product',
+        price: item.product.price || 0,
+        quantity: item.quantity,
+      }));
+    } catch (error) {
+      return rejectWithValue('Network error while fetching cart');
+    }
   }
 );
 
 export const updateCartInBackend = createAsyncThunk(
   'cart/updateInBackend',
   async (cart: { id: string; name: string; price: number; quantity: number }[], { rejectWithValue }) => {
-    const token = localStorage.getItem('token');
-    // Convert frontend cart to backend format
-    const items = cart.map(item => ({ product: item.id, quantity: item.quantity }));
-    const res = await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ items }),
-    });
-    if (!res.ok) return rejectWithValue('Failed to update cart');
-    return cart;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return cart; // Just return the cart if not logged in
+      
+      // Convert frontend cart to backend format
+      const items = cart.map(item => ({ product: item.id, quantity: item.quantity }));
+      const res = await fetch('/api/cart', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json', 
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ items }),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        return rejectWithValue(errorData?.message || 'Failed to update cart');
+      }
+      
+      return cart;
+    } catch (error) {
+      return rejectWithValue('Network error while updating cart');
+    }
   }
 );
 
 export const clearCartInBackend = createAsyncThunk(
   'cart/clearInBackend',
   async (_, { rejectWithValue }) => {
-    const token = localStorage.getItem('token');
-    const res = await fetch('/api/cart', {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return rejectWithValue('Failed to clear cart');
-    return [];
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return []; // Return empty cart if not logged in
+      
+      const res = await fetch('/api/cart', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        return rejectWithValue(errorData?.message || 'Failed to clear cart');
+      }
+      
+      return [];
+    } catch (error) {
+      return rejectWithValue('Network error while clearing cart');
+    }
   }
 );
 
 export const addToCartAndSync = createAsyncThunk(
   'cart/addToCartAndSync',
-  async (item: { id: string; name: string; price: number }, { getState, dispatch }) => {
-    // Add to Redux cart first
-    dispatch(cartSlice.actions.addToCart(item));
-    // Sync to backend
-    const state: any = getState();
-    await dispatch(updateCartInBackend(state.cart));
-    return state.cart;
+  async (item: { id: string; name: string; price: number }, { getState, dispatch, rejectWithValue }) => {
+    try {
+      // Add to Redux cart first
+      dispatch(cartSlice.actions.addToCart(item));
+      
+      // Sync to backend
+      const state: any = getState();
+      const result = await dispatch(updateCartInBackend(state.cart));
+      
+      // Check if the backend update was successful
+      if (updateCartInBackend.rejected.match(result)) {
+        // If backend update failed, return to the previous cart state
+        return rejectWithValue(result.payload || 'Failed to add to cart');
+      }
+      
+      return state.cart;
+    } catch (error) {
+      return rejectWithValue('Error adding to cart');
+    }
   }
 );
 
 export const changeCartQuantityAndSync = createAsyncThunk(
   'cart/changeCartQuantityAndSync',
-  async ({ id, quantity }: { id: string; quantity: number }, { getState, dispatch }) => {
-    // Change quantity in Redux cart
-    dispatch(cartSlice.actions.changeQuantity({ id, quantity }));
-    // Sync to backend
-    const state: any = getState();
-    await dispatch(updateCartInBackend(state.cart));
-    return state.cart;
+  async ({ id, quantity }: { id: string; quantity: number }, { getState, dispatch, rejectWithValue }) => {
+    try {
+      // Change quantity in Redux cart
+      dispatch(cartSlice.actions.changeQuantity({ id, quantity }));
+      
+      // Sync to backend
+      const state: any = getState();
+      const result = await dispatch(updateCartInBackend(state.cart));
+      
+      // Check if the backend update was successful
+      if (updateCartInBackend.rejected.match(result)) {
+        // If backend update failed, return to the previous cart state
+        return rejectWithValue(result.payload || 'Failed to update cart quantity');
+      }
+      
+      return state.cart;
+    } catch (error) {
+      return rejectWithValue('Error updating cart quantity');
+    }
   }
 );
 
@@ -121,10 +181,30 @@ export const cartSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchCartFromBackend.fulfilled, (_state, action) => action.payload)
+      .addCase(fetchCartFromBackend.rejected, (state) => {
+        // On error, keep the current state
+        return state;
+      })
       .addCase(clearCartInBackend.fulfilled, () => [])
+      .addCase(clearCartInBackend.rejected, (state) => {
+        // On error, keep the current state
+        return state;
+      })
       .addCase(updateCartInBackend.fulfilled, (_state, action) => action.payload)
+      .addCase(updateCartInBackend.rejected, (state) => {
+        // On error, keep the current state
+        return state;
+      })
       .addCase(addToCartAndSync.fulfilled, (_state, action) => action.payload)
-      .addCase(changeCartQuantityAndSync.fulfilled, (_state, action) => action.payload);
+      .addCase(addToCartAndSync.rejected, (state) => {
+        // On error, keep the current state
+        return state;
+      })
+      .addCase(changeCartQuantityAndSync.fulfilled, (_state, action) => action.payload)
+      .addCase(changeCartQuantityAndSync.rejected, (state) => {
+        // On error, keep the current state
+        return state;
+      });
   },
 });
 

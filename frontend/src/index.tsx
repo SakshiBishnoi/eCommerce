@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
@@ -7,6 +7,10 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter } from 'react-router-dom';
+import { initializeCart } from './utils/cartUtils';
+
+// Initialize cart on app start if user is logged in
+initializeCart();
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

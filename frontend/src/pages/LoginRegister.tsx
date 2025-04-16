@@ -22,13 +22,16 @@ import {
   AlertIcon,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
-import { useDispatch } from 'react-redux';
-import { fetchCartFromBackend } from '../store';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const API_URL = '/api/auth';
 
 const LoginRegister: React.FC = () => {
   const cardBg = useColorModeValue('white', 'gray.700');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -42,7 +45,6 @@ const LoginRegister: React.FC = () => {
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
   const [regLoading, setRegLoading] = useState(false);
-  const dispatch = useDispatch();
 
   // Login handler
   const handleLogin = async (e: React.FormEvent) => {
@@ -59,13 +61,14 @@ const LoginRegister: React.FC = () => {
       if (!res.ok) {
         setLoginError(data.message || (data.errors && data.errors[0]?.msg) || 'Login failed');
       } else {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        await dispatch(fetchCartFromBackend() as any);
+        // Use the login function from AuthContext (which will also fetch cart)
+        login(data.token, data.user);
+        
+        // Navigate to appropriate page
         if (data.user.role === 'admin') {
-          window.location.href = '/admin';
+          navigate('/admin');
         } else {
-          window.location.href = '/';
+          navigate('/');
         }
       }
     } catch (err) {
@@ -91,6 +94,10 @@ const LoginRegister: React.FC = () => {
         setRegError(data.message || (data.errors && data.errors[0]?.msg) || 'Registration failed');
       } else {
         setRegSuccess('Registration successful! You can now log in.');
+        // Clear form fields
+        setRegName('');
+        setRegEmail('');
+        setRegPassword('');
       }
     } catch (err) {
       setRegError('Registration failed');

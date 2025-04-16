@@ -1,9 +1,46 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Heading, Text, Spinner, Stack, Card, CardBody, Table, Thead, Tbody, Tr, Th, Td, Alert, AlertIcon } from '@chakra-ui/react';
+import { 
+  Box, 
+  Heading, 
+  Text, 
+  Spinner, 
+  Alert, 
+  AlertIcon, 
+  SimpleGrid, 
+  Stat, 
+  StatLabel, 
+  StatNumber, 
+  StatHelpText, 
+  Card, 
+  CardBody,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Badge,
+  Flex,
+  Icon
+} from '@chakra-ui/react';
+import { 
+  FiShoppingBag, 
+  FiUsers, 
+  FiDollarSign, 
+  FiPackage,
+  FiTrendingUp,
+  FiTrendingDown
+} from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard: React.FC = () => {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [stats, setStats] = useState<any>({
+    totalOrders: 0,
+    totalUsers: 0,
+    totalRevenue: 0,
+    totalProducts: 0,
+    recentOrders: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -29,7 +66,18 @@ const AdminDashboard: React.FC = () => {
         });
         const data = await res.json();
         if (!res.ok) setError(data.message || 'Failed to fetch orders');
-        else setOrders(data);
+        else {
+          // Calculate stats from orders
+          const revenue = data.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
+          
+          setStats({
+            totalOrders: data.length,
+            totalUsers: 25, // mock data
+            totalRevenue: revenue,
+            totalProducts: 48, // mock data
+            recentOrders: data.slice(0, 5) // Last 5 orders
+          });
+        }
       } catch (err) {
         setError('Failed to fetch orders');
       }
@@ -38,48 +86,156 @@ const AdminDashboard: React.FC = () => {
     fetchOrders();
   }, [navigate]);
 
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending':
+        return 'yellow';
+      case 'processing':
+        return 'blue';
+      case 'shipped':
+        return 'purple';
+      case 'delivered':
+        return 'green';
+      case 'cancelled':
+        return 'red';
+      case 'paid':
+        return 'green';
+      default:
+        return 'gray';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Flex justify="center" align="center" h="100%" py={10}>
+        <Spinner size="xl" />
+      </Flex>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert status="error" mb={4}>
+        <AlertIcon />
+        {error}
+      </Alert>
+    );
+  }
+
   return (
-    <Box maxW="container.xl" mx="auto" mt={4}>
-      <Heading as="h2" size="lg" mb={4}>Admin Dashboard</Heading>
-      {loading ? (
-        <Spinner />
-      ) : error ? (
-        <Alert status="error"><AlertIcon />{error}</Alert>
-      ) : orders.length === 0 ? (
-        <Text>No orders found.</Text>
-      ) : (
-        <Table variant="simple" size="sm">
-          <Thead>
-            <Tr>
-              <Th>Order ID</Th>
-              <Th>User</Th>
-              <Th>Status</Th>
-              <Th>Total</Th>
-              <Th>Date</Th>
-              <Th>Items</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {orders.map(order => (
-              <Tr key={order._id}>
-                <Td>{order._id}</Td>
-                <Td>{order.user?.email || order.user}</Td>
-                <Td>{order.status}</Td>
-                <Td>${order.total}</Td>
-                <Td>{new Date(order.createdAt).toLocaleString()}</Td>
-                <Td>
-                  <ul>
-                    {order.products.map((item: any, idx: number) => (
-                      <li key={idx}>Product: {item.product} | Qty: {item.quantity}</li>
-                    ))}
-                  </ul>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      )}
+    <Box>
+      <Heading as="h1" size="lg" mb={6}>Dashboard</Heading>
+      
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6} mb={8}>
+        <StatCard 
+          title="Total Orders" 
+          value={stats.totalOrders} 
+          helpText="+12% from last month"
+          icon={FiShoppingBag}
+          accentColor="blue.500"
+        />
+        <StatCard 
+          title="Total Users" 
+          value={stats.totalUsers} 
+          helpText="+8% from last month"
+          icon={FiUsers}
+          accentColor="green.500"
+        />
+        <StatCard 
+          title="Total Revenue" 
+          value={`$${stats.totalRevenue.toFixed(2)}`}
+          helpText="+23% from last month" 
+          icon={FiDollarSign}
+          accentColor="purple.500"
+        />
+        <StatCard 
+          title="Total Products" 
+          value={stats.totalProducts}
+          helpText="+5% from last month" 
+          icon={FiPackage}
+          accentColor="orange.500"
+        />
+      </SimpleGrid>
+      
+      <Box mb={8}>
+        <Heading as="h2" size="md" mb={4}>Recent Orders</Heading>
+        <Card>
+          <CardBody overflowX="auto">
+            <Table variant="simple">
+              <Thead>
+                <Tr>
+                  <Th>Order ID</Th>
+                  <Th>Customer</Th>
+                  <Th>Status</Th>
+                  <Th isNumeric>Total</Th>
+                  <Th>Date</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {stats.recentOrders.map((order: any) => (
+                  <Tr key={order._id}>
+                    <Td fontWeight="medium">{order._id}</Td>
+                    <Td>{order.user?.email || order.user}</Td>
+                    <Td>
+                      <Badge colorScheme={getStatusColor(order.status)} borderRadius="full" px={2}>
+                        {order.status}
+                      </Badge>
+                    </Td>
+                    <Td isNumeric>${order.total?.toFixed(2)}</Td>
+                    <Td>{new Date(order.createdAt).toLocaleDateString()}</Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+            {stats.recentOrders.length === 0 && (
+              <Text textAlign="center" py={4} color="gray.500">No recent orders</Text>
+            )}
+          </CardBody>
+        </Card>
+      </Box>
     </Box>
   );
 };
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  helpText: string;
+  icon: React.ElementType;
+  accentColor: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ title, value, helpText, icon, accentColor }) => {
+  const isPositive = helpText.includes('+');
+  
+  return (
+    <Card>
+      <CardBody>
+        <Flex justify="space-between" align="center">
+          <Stat>
+            <StatLabel color="gray.500">{title}</StatLabel>
+            <StatNumber fontSize="2xl" fontWeight="bold">{value}</StatNumber>
+            <StatHelpText display="flex" alignItems="center" m={0}>
+              <Icon 
+                as={isPositive ? FiTrendingUp : FiTrendingDown} 
+                color={isPositive ? "green.400" : "red.400"}
+                mr={1}
+              />
+              {helpText}
+            </StatHelpText>
+          </Stat>
+          <Box 
+            p={3} 
+            bg={`${accentColor}20`} 
+            color={accentColor}
+            borderRadius="full"
+          >
+            <Icon as={icon} boxSize={6} />
+          </Box>
+        </Flex>
+      </CardBody>
+    </Card>
+  );
+};
+
 export default AdminDashboard; 
