@@ -40,9 +40,8 @@ const ProductList: React.FC = () => {
     params.append('limit', reset ? PAGE_SIZE.toString() : LOAD_MORE_SIZE.toString());
     if (newSearch.trim()) params.append('search', newSearch.trim());
     if (newCategory !== 'All') {
-      // Find category id by name
       const cat = categories.find((c: any) => c.name === newCategory);
-      if (cat) params.append('category', cat.id);
+      if (cat && cat._id) params.append('category', cat._id);
     }
     const res = await fetch(`/api/products?${params.toString()}`);
     const data = await res.json();

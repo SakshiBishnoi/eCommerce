@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import Product from '../models/Product';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ router.get('/', async (req: Request, res: Response) => {
   const { search = '', category, offset = 0, limit = 20 } = req.query;
   const query: any = {};
 
-  if (category) {
+  if (category && mongoose.Types.ObjectId.isValid(category as string)) {
     query.category = category;
   }
   if (search) {
