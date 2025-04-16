@@ -1,14 +1,27 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link as LinkRouter } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link as LinkRouter, Navigate } from 'react-router-dom';
 import { Box, Flex, Heading, Button, Container } from '@chakra-ui/react';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import LoginRegister from './pages/LoginRegister';
+import Checkout from './pages/Checkout';
+import OrderHistory from './pages/OrderHistory';
+import AdminDashboard from './pages/AdminDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const getUser = () => {
+  try {
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  } catch {
+    return null;
+  }
+};
+
 const App: React.FC = () => {
+  const user = getUser();
   return (
     <Router>
       <Box as="nav" bg="blue.600" color="white" px={4} py={2} boxShadow="md">
@@ -31,6 +44,23 @@ const App: React.FC = () => {
               Cart
             </Button>
           </LinkRouter>
+          <LinkRouter to="/order-history" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
+              Order History
+            </Button>
+          </LinkRouter>
+          <LinkRouter to="/checkout" style={{ textDecoration: 'none' }}>
+            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
+              Checkout
+            </Button>
+          </LinkRouter>
+          {user && user.role === 'admin' && (
+            <LinkRouter to="/admin" style={{ textDecoration: 'none' }}>
+              <Button variant="ghost" colorScheme="yellow" mr={2} _hover={{ bg: 'yellow.400' }}>
+                Admin Dashboard
+              </Button>
+            </LinkRouter>
+          )}
           <LinkRouter to="/login" style={{ textDecoration: 'none' }}>
             <Button variant="ghost" colorScheme="whiteAlpha" _hover={{ bg: 'blue.700' }}>
               Login/Register
@@ -46,6 +76,9 @@ const App: React.FC = () => {
             <Route path="/products/:id" element={<PageWrapper><ProductDetail /></PageWrapper>} />
             <Route path="/cart" element={<PageWrapper><Cart /></PageWrapper>} />
             <Route path="/login" element={<PageWrapper><LoginRegister /></PageWrapper>} />
+            <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
+            <Route path="/order-history" element={<PageWrapper><OrderHistory /></PageWrapper>} />
+            <Route path="/admin" element={user && user.role === 'admin' ? <PageWrapper><AdminDashboard /></PageWrapper> : <Navigate to="/" />} />
           </Routes>
         </AnimatePresence>
       </Container>

@@ -56,6 +56,7 @@ const LoginRegister: React.FC = () => {
         setLoginError(data.message || (data.errors && data.errors[0]?.msg) || 'Login failed');
       } else {
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         window.location.href = '/'; // redirect to home
       }
     } catch (err) {

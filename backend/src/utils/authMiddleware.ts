@@ -9,8 +9,8 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as any;
-    if (decoded.role !== 'user') {
-      return res.status(403).json({ message: 'Forbidden: Not a user' });
+    if (decoded.role !== 'user' && decoded.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden: Not a user or admin' });
     }
     // @ts-ignore
     req.user = decoded;
