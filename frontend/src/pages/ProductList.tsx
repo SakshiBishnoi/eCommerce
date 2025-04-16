@@ -9,17 +9,19 @@ import {
   Spinner,
 } from '@chakra-ui/react';
 import { useDispatch } from 'react-redux';
-import { addToCart } from '../store';
+import { addToCartAndSync } from '../store';
 import { Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import debounce from 'lodash.debounce';
+import { useCart } from '../context/CartContext';
 
 const PAGE_SIZE = 20;
 const LOAD_MORE_SIZE = 16;
 
 const ProductList: React.FC = () => {
   const dispatch = useDispatch();
+  const { openCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<any[]>([]);
@@ -79,6 +81,13 @@ const ProductList: React.FC = () => {
   // Fallback colors
   const cardBg = 'white';
   const cardBorder = 'gray.200';
+
+  const handleAddToCart = (e: React.MouseEvent, product: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch(addToCartAndSync({ id: product._id || product.id, name: product.name, price: product.price }) as any);
+    openCart(); // Open the cart drawer when a product is added
+  };
 
   return (
     <Box maxW="container.lg" mx="auto" mt={4} px={2}>
@@ -179,10 +188,7 @@ const ProductList: React.FC = () => {
                         size="sm"
                         w="full"
                         mt={2}
-                        onClick={e => {
-                          e.preventDefault();
-                          dispatch(addToCart({ id: product._id || product.id, name: product.name, price: product.price }));
-                        }}
+                        onClick={(e) => handleAddToCart(e, product)}
                       >
                         Add to Cart
                       </Button>

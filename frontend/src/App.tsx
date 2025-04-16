@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link as LinkRouter, useNavigate, Routes, Route, Navigate } from 'react-router-dom';
-import { Box, Flex, Heading, Button, Container, Text } from '@chakra-ui/react';
+import { Box, Flex, Heading, Button, Container, Text, Badge } from '@chakra-ui/react';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -11,6 +11,10 @@ import OrderHistory from './pages/OrderHistory';
 import AdminDashboard from './pages/AdminDashboard';
 import UserDashboard from './pages/UserDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import { RootState } from './store';
+import { CartProvider, useCart } from './context/CartContext';
+import CartDrawer from './components/CartDrawer';
 
 const getUser = () => {
   try {
@@ -21,15 +25,20 @@ const getUser = () => {
   }
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const user = getUser();
+  const cart = useSelector((state: RootState) => state.cart);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const navigate = useNavigate();
+  const { isCartOpen, openCart, closeCart } = useCart();
+  
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     navigate('/');
     window.location.reload();
   };
+  
   return (
     <>
       <Box as="nav" bg="blue.600" color="white" px={4} py={2} boxShadow="md">
@@ -47,11 +56,27 @@ const App: React.FC = () => {
               Products
             </Button>
           </LinkRouter>
-          <LinkRouter to="/cart" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
-              Cart
-            </Button>
-          </LinkRouter>
+          <Button 
+            variant="ghost" 
+            colorScheme="whiteAlpha" 
+            mr={2} 
+            _hover={{ bg: 'blue.700' }} 
+            position="relative"
+            onClick={openCart}
+          >
+            Cart
+            {cartItemCount > 0 && (
+              <Badge
+                colorScheme="red"
+                borderRadius="full"
+                position="absolute"
+                top="-5px"
+                right="-5px"
+              >
+                {cartItemCount}
+              </Badge>
+            )}
+          </Button>
           <LinkRouter to="/order-history" style={{ textDecoration: 'none' }}>
             <Button variant="ghost" colorScheme="whiteAlpha" mr={2} _hover={{ bg: 'blue.700' }}>
               Order History
@@ -99,7 +124,17 @@ const App: React.FC = () => {
           </Routes>
         </AnimatePresence>
       </Container>
+      
+      <CartDrawer isOpen={isCartOpen} onClose={closeCart} />
     </>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <CartProvider>
+      <AppContent />
+    </CartProvider>
   );
 };
 

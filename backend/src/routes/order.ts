@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import Order from '../models/Order';
+import Cart from '../models/Cart';
 import authMiddleware from '../utils/authMiddleware';
 import adminMiddleware from '../utils/adminMiddleware';
 
@@ -13,13 +14,29 @@ router.get('/', authMiddleware, async (req: Request, res: Response) => {
   res.json(orders);
 });
 
-// Place order (simulate payment)
+// Place order (use cart from MongoDB)
 router.post('/', authMiddleware, async (req: Request, res: Response) => {
   // @ts-ignore
   const userId = req.user.id;
-  const { products, total } = req.body;
+  // Fetch cart from MongoDB
+  const cart = await Cart.findOne({ user: userId }).populate('items.product');
+  if (!cart || !cart.items.length) {
+    return res.status(400).json({ message: 'Cart is empty' });
+  }
+  // Calculate total
+  const products = cart.items.map(item => ({
+    product: item.product._id || item.product,
+    quantity: item.quantity,
+  }));
+  const total = cart.items.reduce((sum, item) => {
+    // @ts-ignore
+    return sum + (item.product.price || 0) * item.quantity;
+  }, 0);
   // Simulate payment always successful
   const order = await Order.create({ user: userId, products, total, status: 'paid' });
+  // Clear cart after order
+  cart.items = [];
+  await cart.save();
   res.status(201).json({ message: 'Order placed successfully', order });
 });
 

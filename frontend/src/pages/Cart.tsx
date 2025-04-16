@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, removeFromCart, clearCart } from '../store';
+import { RootState, removeFromCart, clearCart, updateCartInBackend, clearCartInBackend } from '../store';
 import {
   Box,
   Heading,
@@ -25,13 +25,26 @@ const Cart: React.FC = () => {
   // Find product details for each cart item (for category, image, etc.)
   const getProductDetails = (id: string) => products.find((p: any) => p.id === id);
 
-  const handleRemove = (id: string) => {
+  const handleRemove = async (id: string) => {
     dispatch(removeFromCart(id));
+    await dispatch(updateCartInBackend(cart.filter(i => i.id !== id)) as any);
   };
 
-  const handleCheckout = () => {
-    dispatch(clearCart());
-    toast({ title: 'Checkout successful!', status: 'success', duration: 2000, isClosable: true });
+  const handleCheckout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}), // No need to send products, backend uses cart
+      });
+      if (!res.ok) throw new Error('Order failed');
+      await dispatch(clearCart() as any);
+      await dispatch(clearCartInBackend() as any);
+      toast({ title: 'Checkout successful!', status: 'success', duration: 2000, isClosable: true });
+    } catch (err) {
+      toast({ title: 'Checkout failed', status: 'error', duration: 2000, isClosable: true });
+    }
   };
 
   return (

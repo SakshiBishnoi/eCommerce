@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState, addToCart } from '../store';
+import { RootState, addToCartAndSync } from '../store';
 import {
   Box,
   Heading,
@@ -12,6 +12,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
+import { useCart } from '../context/CartContext';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +21,7 @@ const ProductDetail: React.FC = () => {
   );
   const dispatch = useDispatch();
   const toast = useToast();
+  const { openCart } = useCart();
 
   if (!product) {
     return (
@@ -33,8 +35,9 @@ const ProductDetail: React.FC = () => {
   }
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ id: product.id, name: product.name, price: product.price }));
+    dispatch(addToCartAndSync({ id: product.id, name: product.name, price: product.price }) as any);
     toast({ title: 'Added to cart!', status: 'success', duration: 1500, isClosable: true });
+    openCart();
   };
 
   return (

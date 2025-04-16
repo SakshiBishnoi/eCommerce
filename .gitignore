@@ -41,4 +41,7 @@ backend/coverage/
 
 # Ignore project planning files
 PLAN.txt
-PROJECT.txt 
+PROJECT.txt
+
+# Ignore admin plan
+AdminPlan.txt 

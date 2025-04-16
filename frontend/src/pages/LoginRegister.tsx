@@ -22,6 +22,8 @@ import {
   AlertIcon,
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
+import { useDispatch } from 'react-redux';
+import { fetchCartFromBackend } from '../store';
 
 const API_URL = '/api/auth';
 
@@ -40,6 +42,7 @@ const LoginRegister: React.FC = () => {
   const [regError, setRegError] = useState('');
   const [regSuccess, setRegSuccess] = useState('');
   const [regLoading, setRegLoading] = useState(false);
+  const dispatch = useDispatch();
 
   // Login handler
   const handleLogin = async (e: React.FormEvent) => {
@@ -58,6 +61,7 @@ const LoginRegister: React.FC = () => {
       } else {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        await dispatch(fetchCartFromBackend() as any);
         if (data.user.role === 'admin') {
           window.location.href = '/admin';
         } else {
