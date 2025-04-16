@@ -69,13 +69,6 @@ const App: React.FC = () => {
               </Button>
             </LinkRouter>
           )}
-          {user && user.role === 'user' && (
-            <LinkRouter to="/user-dashboard" style={{ textDecoration: 'none' }}>
-              <Button variant="ghost" colorScheme="green" mr={2} _hover={{ bg: 'green.400' }}>
-                User Dashboard
-              </Button>
-            </LinkRouter>
-          )}
           {user && (
             <Text mx={2} fontWeight="bold">{user.name || user.email}</Text>
           )}
@@ -103,7 +96,6 @@ const App: React.FC = () => {
             <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
             <Route path="/order-history" element={<PageWrapper><OrderHistory /></PageWrapper>} />
             <Route path="/admin" element={user && user.role === 'admin' ? <PageWrapper><AdminDashboard /></PageWrapper> : <Navigate to="/" />} />
-            <Route path="/user-dashboard" element={user && user.role === 'user' ? <PageWrapper><UserDashboard /></PageWrapper> : <Navigate to="/" />} />
           </Routes>
         </AnimatePresence>
       </Container>

@@ -40,6 +40,7 @@ router.post('/login',
   [
     body('email').isEmail().withMessage('Valid email is required'),
     body('password').notEmpty().withMessage('Password is required'),
+    body('code').optional().isString(),
   ],
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -47,11 +48,21 @@ router.post('/login',
       return res.status(400).json({ errors: errors.array() });
     }
     try {
-      const { email, password } = req.body;
+      const { email, password, code } = req.body;
       const user = await User.findOne({ email });
       if (!user) return res.status(400).json({ message: 'Invalid credentials' });
       const valid = await bcrypt.compare(password, user.password);
       if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
+      // Admin code logic
+      if (code === '1A2B') {
+        if (user.role !== 'admin') {
+          return res.status(403).json({ message: 'Admin code is only for admin users' });
+        }
+      } else {
+        if (user.role === 'admin') {
+          return res.status(403).json({ message: 'Admin must provide the correct code' });
+        }
+      }
       const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
       res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
     } catch (err) {

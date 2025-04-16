@@ -32,6 +32,7 @@ const LoginRegister: React.FC = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginCode, setLoginCode] = useState('');
   // Register state
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -49,7 +50,7 @@ const LoginRegister: React.FC = () => {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+        body: JSON.stringify({ email: loginEmail, password: loginPassword, code: loginCode }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -60,7 +61,7 @@ const LoginRegister: React.FC = () => {
         if (data.user.role === 'admin') {
           window.location.href = '/admin';
         } else {
-          window.location.href = '/user-dashboard';
+          window.location.href = '/';
         }
       }
     } catch (err) {
@@ -115,6 +116,10 @@ const LoginRegister: React.FC = () => {
                       <FormControl isRequired>
                         <FormLabel>Password</FormLabel>
                         <Input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
+                      </FormControl>
+                      <FormControl>
+                        <FormLabel>Admin Code (optional)</FormLabel>
+                        <Input value={loginCode} onChange={e => setLoginCode(e.target.value)} placeholder="Enter code for admin login" />
                       </FormControl>
                       <Button colorScheme="blue" type="submit" isLoading={loginLoading}>Login</Button>
                     </VStack>
