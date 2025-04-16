@@ -1,6 +1,6 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link as LinkRouter, Navigate } from 'react-router-dom';
-import { Box, Flex, Heading, Button, Container } from '@chakra-ui/react';
+import { Link as LinkRouter, useNavigate, Routes, Route, Navigate } from 'react-router-dom';
+import { Box, Flex, Heading, Button, Container, Text } from '@chakra-ui/react';
 import Home from './pages/Home';
 import ProductList from './pages/ProductList';
 import ProductDetail from './pages/ProductDetail';
@@ -9,6 +9,7 @@ import LoginRegister from './pages/LoginRegister';
 import Checkout from './pages/Checkout';
 import OrderHistory from './pages/OrderHistory';
 import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getUser = () => {
@@ -22,8 +23,15 @@ const getUser = () => {
 
 const App: React.FC = () => {
   const user = getUser();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+    window.location.reload();
+  };
   return (
-    <Router>
+    <>
       <Box as="nav" bg="blue.600" color="white" px={4} py={2} boxShadow="md">
         <Flex align="center" maxW="1200px" mx="auto">
           <LinkRouter to="/" style={{ flex: 1, textDecoration: 'none', color: 'white' }}>
@@ -61,11 +69,27 @@ const App: React.FC = () => {
               </Button>
             </LinkRouter>
           )}
-          <LinkRouter to="/login" style={{ textDecoration: 'none' }}>
-            <Button variant="ghost" colorScheme="whiteAlpha" _hover={{ bg: 'blue.700' }}>
-              Login/Register
+          {user && user.role === 'user' && (
+            <LinkRouter to="/user-dashboard" style={{ textDecoration: 'none' }}>
+              <Button variant="ghost" colorScheme="green" mr={2} _hover={{ bg: 'green.400' }}>
+                User Dashboard
+              </Button>
+            </LinkRouter>
+          )}
+          {user && (
+            <Text mx={2} fontWeight="bold">{user.name || user.email}</Text>
+          )}
+          {user ? (
+            <Button colorScheme="red" variant="outline" size="sm" onClick={handleLogout} ml={2}>
+              Logout
             </Button>
-          </LinkRouter>
+          ) : (
+            <LinkRouter to="/login" style={{ textDecoration: 'none' }}>
+              <Button variant="ghost" colorScheme="whiteAlpha" _hover={{ bg: 'blue.700' }}>
+                Login/Register
+              </Button>
+            </LinkRouter>
+          )}
         </Flex>
       </Box>
       <Container maxW="container.lg" mt={8}>
@@ -79,10 +103,11 @@ const App: React.FC = () => {
             <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
             <Route path="/order-history" element={<PageWrapper><OrderHistory /></PageWrapper>} />
             <Route path="/admin" element={user && user.role === 'admin' ? <PageWrapper><AdminDashboard /></PageWrapper> : <Navigate to="/" />} />
+            <Route path="/user-dashboard" element={user && user.role === 'user' ? <PageWrapper><UserDashboard /></PageWrapper> : <Navigate to="/" />} />
           </Routes>
         </AnimatePresence>
       </Container>
-    </Router>
+    </>
   );
 };
 

@@ -57,7 +57,11 @@ const LoginRegister: React.FC = () => {
       } else {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        window.location.href = '/'; // redirect to home
+        if (data.user.role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/user-dashboard';
+        }
       }
     } catch (err) {
       setLoginError('Login failed');

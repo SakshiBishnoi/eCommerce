@@ -6,6 +6,7 @@ import authRouter from './routes/auth';
 import productRouter from './routes/product';
 import categoryRouter from './routes/category';
 import orderRouter from './routes/order';
+import cartRouter from './routes/cart';
 
 // Load environment variables
 dotenv.config();
@@ -37,6 +38,7 @@ mongoose
       console.log('  /api/products [GET, GET /:id, POST]');
       console.log('  /api/categories [GET, POST]');
       console.log('  /api/orders [GET, POST]');
+      console.log('  /api/cart [GET, POST]');
       console.log('Ready for requests!');
     });
   })
@@ -49,6 +51,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/products', productRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/cart', cartRouter);
 
 // Global error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
