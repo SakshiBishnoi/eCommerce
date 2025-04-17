@@ -41,7 +41,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const toggleSidebar = () => setCollapsed(!collapsed);
 
   return (
-    <Flex h="100vh">
+    <Flex minH="100vh"> {/* Use minH instead of h for flexibility */}
       {/* Sidebar */}
       <Box
         bg={bgColor}
@@ -134,7 +134,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <Box 
         ml={collapsed ? "80px" : "250px"} 
         flex="1"
-        p={5}
+        p={6} /* Increased padding slightly */
         transition="margin-left 0.3s"
         overflowY="auto"
       >
@@ -144,4 +144,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 };
 
-export default AdminLayout; 
+export default AdminLayout;
