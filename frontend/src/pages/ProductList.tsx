@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   Heading,
@@ -6,201 +6,323 @@ import {
   Button,
   SimpleGrid,
   Input,
-  Spinner,
+  Skeleton,
+  SkeletonText,
+  useToast,
+  Flex,
+  Tag,
+  Image,
+  Card,
+  CardBody,
+  CardFooter,
+  HStack,
+  useBreakpointValue,
+  useColorModeValue,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerHeader,
+  DrawerBody,
+  IconButton,
+  Center,
+  InputGroup,
+  InputLeftElement,
+  Spacer
 } from '@chakra-ui/react';
-import { useDispatch } from 'react-redux';
-import { addToCartAndSync } from '../store';
 import { Link as RouterLink } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import InfiniteScroll from 'react-infinite-scroll-component';
-import debounce from 'lodash.debounce';
-import { useCart } from '../context/CartContext';
+import { FiFilter, FiSearch } from 'react-icons/fi';
+import { motion } from 'framer-motion';
 
+const MotionCard = motion(Card);
 const PAGE_SIZE = 20;
-const LOAD_MORE_SIZE = 16;
 
 const ProductList: React.FC = () => {
-  const dispatch = useDispatch();
-  const { openCart } = useCart();
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [search, setSearch] = useState('');
   const [products, setProducts] = useState<any[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const toast = useToast();
+  const isMobile = useBreakpointValue({ base: true, md: false });
+  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardShadow = useColorModeValue('md', 'dark-lg');
+  const filterBg = useColorModeValue('white', 'gray.900');
+  const filterInputBg = useColorModeValue('gray.50', 'gray.800');
+  const categoryBarBg = useColorModeValue('white', 'gray.900');
+  const categoryBarShadow = useColorModeValue('sm', 'dark-lg');
 
-  // Use categories.json for category list
-  const categoryNames = ['All', ...categories.map((c: any) => c.name)];
-
-  // Fetch products from backend
-  const fetchProducts = useCallback(async (reset = false, newSearch = search, newCategory = selectedCategory) => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    params.append('offset', reset ? '0' : offset.toString());
-    params.append('limit', reset ? PAGE_SIZE.toString() : LOAD_MORE_SIZE.toString());
-    if (newSearch.trim()) params.append('search', newSearch.trim());
-    if (newCategory !== 'All') {
-      const cat = categories.find((c: any) => c.name === newCategory);
-      if (cat && cat._id) params.append('category', cat._id);
-    }
-    const res = await fetch(`/api/products?${params.toString()}`);
-    const data = await res.json();
-    setProducts(prev => reset ? data.products : [...prev, ...data.products]);
-    setTotal(data.total);
-    setHasMore((reset ? data.products.length : products.length + data.products.length) < data.total);
-    setLoading(false);
-    if (reset) setOffset(data.products.length);
-    else setOffset(prev => prev + data.products.length);
-  }, [offset, search, selectedCategory, categories, products.length]);
-
-  // Initial load and on search/category change
+  // Fetch categories
   useEffect(() => {
-    setProducts([]);
-    setOffset(0);
-    setHasMore(true);
-    fetchProducts(true);
-    // eslint-disable-next-line
-  }, [search, selectedCategory]);
-
-  // Debounced search handler
-  const handleSearch = useCallback(
-    debounce((value: string) => {
-      setSearch(value);
-    }, 300),
-    []
-  );
-
-  useEffect(() => {
-    fetch('/api/categories')
-      .then(res => res.json())
-      .then(data => setCategories(data));
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/categories');
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.categories)) {
+          setCategories(data.categories);
+        } else if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          setCategories([]);
+        }
+      } catch (err) {
+        setCategories([]);
+      }
+    };
+    fetchCategories();
   }, []);
 
-  // Fallback colors
-  const cardBg = 'white';
-  const cardBorder = 'gray.200';
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const params = new URLSearchParams();
+        params.append('page', String(page));
+        params.append('limit', String(PAGE_SIZE));
+        if (search.trim()) params.append('search', search.trim());
+        if (selectedCategory !== 'All') {
+          const cat = categories.find((c: any) => c.name === selectedCategory);
+          if (cat && cat._id) params.append('category', cat._id);
+        }
+        const res = await fetch(`/api/products?${params.toString()}`);
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.products)) {
+          setProducts(data.products);
+          setTotalPages(Math.max(1, Math.ceil((data.total || 1) / PAGE_SIZE)));
+        } else if (Array.isArray(data)) {
+          setProducts(data);
+          setTotalPages(1);
+        } else {
+          setProducts([]);
+          setTotalPages(1);
+        }
+      } catch (err) {
+        setError('Failed to fetch products');
+        setProducts([]);
+        setTotalPages(1);
+      }
+      setLoading(false);
+    };
+    fetchProducts();
+    // eslint-disable-next-line
+  }, [page, search, selectedCategory, categories]);
 
-  const handleAddToCart = (e: React.MouseEvent, product: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dispatch(addToCartAndSync({ id: product._id || product.id, name: product.name, price: product.price }) as any);
-    openCart(); // Open the cart drawer when a product is added
-  };
+  // Memoize category names for filter buttons
+  const categoryNames = useMemo(() => ['All', ...categories.map((c: any) => c.name)], [categories]);
 
-  return (
-    <Box maxW="container.lg" mx="auto" mt={4} px={2}>
-      <Heading as="h2" size="lg" mb={4}>
-        Product List
-      </Heading>
+  // Skeleton loaders
+  const skeletonArray = Array.from({ length: isMobile ? 4 : 8 });
+
+  // Category Bar
+  const CategoryBar = (
+    <Flex
+      bg={categoryBarBg}
+      boxShadow={categoryBarShadow}
+      borderRadius="xl"
+      px={2}
+      py={2}
+      mb={4}
+      overflowX="auto"
+      align="center"
+      gap={2}
+      w="full"
+      maxW="container.xl"
+      mx="auto"
+      as="nav"
+      aria-label="Product categories"
+      sx={{
+        '::-webkit-scrollbar': { height: '6px' },
+        '::-webkit-scrollbar-thumb': { background: '#e2e8f0', borderRadius: '3px' },
+      }}
+    >
+      {loading && categories.length === 0
+        ? Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} height="36px" width="90px" borderRadius="full" />
+          ))
+        : categoryNames.map((cat) => (
+            <Button
+              key={cat}
+              colorScheme={selectedCategory === cat ? 'blue' : 'gray'}
+              variant={selectedCategory === cat ? 'solid' : 'outline'}
+              onClick={() => {
+                setSelectedCategory(cat);
+                setPage(1);
+              }}
+              fontWeight={600}
+              borderRadius="full"
+              px={5}
+              py={2}
+              minW="90px"
+              size="sm"
+              boxShadow={selectedCategory === cat ? 'md' : undefined}
+              transition="all 0.2s"
+              _focus={{ boxShadow: 'outline' }}
+              tabIndex={0}
+              whiteSpace="nowrap"
+            >
+              {cat}
+            </Button>
+          ))}
+      <Spacer minW={2} />
+    </Flex>
+  );
+
+  // Search Bar
+  const SearchBar = (
+    <InputGroup maxW={{ base: '100%', md: '400px' }} mx="auto" mb={4}>
+      <InputLeftElement pointerEvents="none">
+        <FiSearch color="#A0AEC0" />
+      </InputLeftElement>
       <Input
         placeholder="Search products..."
-        size="md"
-        mb={4}
-        onChange={e => handleSearch(e.target.value)}
+        size="lg"
+        value={search}
+        onChange={e => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+        bg={filterInputBg}
+        borderRadius="full"
+        fontSize="md"
+        boxShadow="sm"
       />
-      <Box display="flex" gap={2} mb={6} overflowX="auto">
-        {categoryNames.map((cat) => (
-          <Button
-            key={cat}
-            colorScheme={selectedCategory === cat ? 'blue' : 'gray'}
-            variant={selectedCategory === cat ? 'solid' : 'outline'}
-            onClick={() => {
-              setSelectedCategory(cat);
-            }}
-            fontWeight={600}
-            textTransform="none"
-            minW="90px"
-          >
-            {cat}
-          </Button>
-        ))}
-      </Box>
-      <motion.div
-        key={selectedCategory + search}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        transition={{ duration: 0.4 }}
-      >
-        <InfiniteScroll
-          dataLength={products.length}
-          next={() => fetchProducts(false)}
-          hasMore={hasMore}
-          loader={
-            <Box textAlign="center" color="gray.400">
-              <Spinner size="sm" mr={2}/>Loading more...
-            </Box>
-          }
-          scrollThreshold={0.95}
-        >
-          <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap={6}>
-            <AnimatePresence>
-              {products.map((product: any) => (
-                <motion.div
-                  key={product._id || product.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  whileHover={{ scale: 1.03 }}
+    </InputGroup>
+  );
+
+  // Mobile filter drawer (optional, not used here for simplicity)
+
+  return (
+    <Box maxW="container.xl" mx="auto" pt={{ base: 4, md: 8 }} px={{ base: 1, md: 4 }}>
+      <Heading as="h1" size="xl" fontWeight="bold" letterSpacing="tight" mb={4} textAlign="left">
+        Products
+      </Heading>
+      {SearchBar}
+      {CategoryBar}
+      {/* Product Grid */}
+      {loading ? (
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap={6} mt={2}>
+          {skeletonArray.map((_, i) => (
+            <Card key={i} borderRadius="2xl" boxShadow="md" p={0} bg={cardBg}>
+              <Skeleton height="160px" borderTopRadius="2xl" />
+              <CardBody>
+                <SkeletonText mt="4" noOfLines={2} spacing="3" />
+                <Skeleton height="20px" mt={2} w="60%" />
+                <Skeleton height="24px" mt={4} w="80%" />
+              </CardBody>
+              <CardFooter>
+                <Skeleton height="40px" w="full" borderRadius="md" />
+              </CardFooter>
+            </Card>
+          ))}
+        </SimpleGrid>
+      ) : error ? (
+        <Center mt={12}>
+          <Text color="red.500" fontSize="lg">
+            {error}
+          </Text>
+        </Center>
+      ) : products.length === 0 ? (
+        <Center mt={12}>
+          <Text color="gray.500" fontSize="lg">
+            No products found.
+          </Text>
+        </Center>
+      ) : (
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 4 }} gap={6} mt={2}>
+          {products.map((product: any) => (
+            <MotionCard
+              key={product._id || product.id}
+              borderRadius="2xl"
+              boxShadow="md"
+              transition="box-shadow 0.2s, transform 0.2s"
+              whileHover={{ scale: 1.03, boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}
+              p={0}
+              bg={cardBg}
+            >
+              <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                bg="gray.50"
+                borderTopRadius="2xl"
+                h="160px"
+              >
+                {product.image || (product.images && product.images[0]) ? (
+                  <Image
+                    src={product.image || product.images[0]}
+                    alt={product.name}
+                    borderRadius="md"
+                    height="140px"
+                    width="auto"
+                    objectFit="cover"
+                    mx="auto"
+                  />
+                ) : (
+                  <Box
+                    bg="gray.100"
+                    borderRadius="md"
+                    height="100px"
+                    width="180px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text color="gray.400">Image</Text>
+                  </Box>
+                )}
+              </Box>
+              <CardBody>
+                <Text fontWeight={700} fontSize="lg" mb={1} noOfLines={1}>
+                  {product.name}
+                </Text>
+                <Tag
+                  mb={2}
+                  colorScheme="blue"
+                  borderRadius="full"
+                  fontSize="sm"
+                  px={3}
+                  py={1}
                 >
-                  <RouterLink to={`/products/${product._id || product.id}`} style={{ textDecoration: 'none' }}>
-                    <Box
-                      bg={cardBg}
-                      borderWidth="1px"
-                      borderColor={cardBorder}
-                      borderRadius="xl"
-                      boxShadow="md"
-                      p={4}
-                      h={"340px"}
-                      display="flex"
-                      flexDirection="column"
-                      justifyContent="space-between"
-                      position="relative"
-                      _hover={{ boxShadow: 'xl', borderColor: 'blue.400', textDecoration: 'none' }}
-                      transition="box-shadow 0.2s, border-color 0.2s"
-                    >
-                      <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
-                        {product.image || (product.images && product.images[0]) ? (
-                          <Box bg="gray.100" borderRadius="md" height="100px" width="180px" display="flex" alignItems="center" justifyContent="center" overflow="hidden">
-                            <img src={product.image || product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          </Box>
-                        ) : (
-                          <Box bg="gray.100" borderRadius="md" height="100px" width="180px" display="flex" alignItems="center" justifyContent="center">
-                            <Text color="gray.400">Image</Text>
-                          </Box>
-                        )}
-                      </Box>
-                      <Text fontWeight={700} mb={1}>
-                        {product.name}
-                      </Text>
-                      <Box mb={2} px={2} py={1} bg="gray.100" borderRadius="md" fontWeight={500} fontSize="sm" w="fit-content">
-                        {product.categoryName || (product.category && product.category.name)}
-                      </Box>
-                      <Text color="blue.500" fontWeight={700} fontSize="lg" mb={2}>
-                        ${product.price}
-                      </Text>
-                      <Button
-                        colorScheme="blue"
-                        size="sm"
-                        w="full"
-                        mt={2}
-                        onClick={(e) => handleAddToCart(e, product)}
-                      >
-                        Add to Cart
-                      </Button>
-                    </Box>
-                  </RouterLink>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </SimpleGrid>
-        </InfiniteScroll>
-        {loading && <Box textAlign="center" color="gray.400"><Spinner size="sm" mr={2}/>Loading...</Box>}
-      </motion.div>
+                  {product.categoryName || (product.category && product.category.name)}
+                </Tag>
+                <Text color="blue.500" fontWeight={700} fontSize="xl" mb={2}>
+                  ${product.price}
+                </Text>
+              </CardBody>
+              <CardFooter>
+                <Button
+                  as={RouterLink}
+                  to={`/products/${product._id || product.id}`}
+                  colorScheme="blue"
+                  w="full"
+                  borderRadius="md"
+                  size="lg"
+                  fontWeight="bold"
+                >
+                  View Details
+                </Button>
+              </CardFooter>
+            </MotionCard>
+          ))}
+        </SimpleGrid>
+      )}
+      {/* Pagination Controls */}
+      <Flex justify="center" mt={8} gap={2}>
+        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>
+          Prev
+        </Button>
+        <Box px={3} py={1} fontWeight="bold">
+          Page {page} of {totalPages}
+        </Box>
+        <Button onClick={() => setPage(page + 1)} disabled={page === totalPages}>
+          Next
+        </Button>
+      </Flex>
     </Box>
   );
 };
