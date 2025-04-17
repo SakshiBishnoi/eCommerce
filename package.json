@@ -6,9 +6,13 @@
     "@types/lodash.debounce": "^4.0.9"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.2.4",
     "@types/express-validator": "^2.20.33",
     "express-validator": "^7.2.1",
     "lodash.debounce": "^4.0.8",
-    "react-infinite-scroll-component": "^6.1.0"
+    "react-beautiful-dnd": "^13.1.1",
+    "react-infinite-scroll-component": "^6.1.0",
+    "react-perfect-scrollbar": "^1.5.8",
+    "recharts": "^2.15.2"
   }
 }

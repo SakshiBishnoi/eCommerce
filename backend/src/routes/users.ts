@@ -90,4 +90,32 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Re
   }
 });
 
+// Admin: Block user
+router.put('/:id/block', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.blocked = true;
+    await user.save();
+    res.json({ message: 'User blocked', user: { ...user.toObject(), password: undefined } });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin: Delete user
+router.delete('/:id', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'User deleted' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router; 

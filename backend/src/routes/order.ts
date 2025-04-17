@@ -46,4 +46,26 @@ router.get('/all', authMiddleware, adminMiddleware, async (_req: Request, res: R
   res.json(orders);
 });
 
+// Admin: Update order status
+router.put('/:id/status', authMiddleware, adminMiddleware, async (req: Request, res: Response) => {
+  const { status } = req.body;
+  const validStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+  try {
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true, runValidators: true }
+    ).populate('user');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router; 
