@@ -12,11 +12,12 @@ Welcome to the future of online shopping! This is a comprehensive eCommerce plat
 *   **Flexible Database:** Utilizes MongoDB (likely with Mongoose ODM - *check `backend/src/models`*) for scalable and adaptable data storage.
 *   **Product Management:** Browse, search, and filter a wide range of products.
 *   **User Authentication:** Secure user registration and login functionality.
-*   **Shopping Cart:** Intuitive cart management allowing users to add, remove, and update items.
-*   **Order History:** Implemented user order tracking with purchase history visualization
-*   **Admin Dashboard:** Complete management interface for product/category CRUD operations
-*   **Automated Testing:** Configured Jest for unit/integration testing (backend/src/__tests__)
-*   **Data Seeding:** Added generateFakeData.js script for database population
+*   **Shopping Cart:** Real-time cart management with backend synchronization, allowing users to add, remove, and update items seamlessly.
+*   **Order History:** User order tracking with detailed purchase history visualization.
+*   **Admin Dashboard:** Advanced management interface for product, category, and user CRUD operations, including analytics (orders, users, revenue, products) and status updates.
+*   **Admin Settings:** Feature toggles for registration, guest checkout, reviews, and notification preferences for new orders, users, and low stock.
+*   **Automated Testing:** Comprehensive Jest setup for unit/integration testing (backend/src/__tests__, frontend/src/__tests__).
+*   **Data Seeding:** Enhanced generateFakeData.js script for robust database population.
 
 ## 🚀 Getting Started
 
