@@ -13,12 +13,20 @@ Welcome to the future of online shopping! This is a comprehensive eCommerce plat
 *   **Product Management:** Browse, search, and filter a wide range of products.
 *   **User Authentication:** Secure user registration and login functionality.
 *   **Shopping Cart:** Intuitive cart management allowing users to add, remove, and update items.
-*   **(Potential) Order History:** Functionality for users to view their past orders.
-*   **(Potential) Admin Dashboard:** Tools for administrators to manage products, categories, and users.
+*   **Order History:** Implemented user order tracking with purchase history visualization
+*   **Admin Dashboard:** Complete management interface for product/category CRUD operations
+*   **Automated Testing:** Configured Jest for unit/integration testing (backend/src/__tests__)
+*   **Data Seeding:** Added generateFakeData.js script for database population
 
 ## 🚀 Getting Started
 
 Follow these steps to set up and run the project locally.
+
+### Data Seeding
+After starting both servers:
+```bash
+node generateFakeData.js
+```
 
 ### Prerequisites
 
@@ -105,11 +113,11 @@ eCommerce/
 
 ## 🛠️ Technology Stack
 
-*   **Frontend:** React, TypeScript, CSS/SCSS (or a UI Library like MUI/Chakra UI)
-*   **Backend:** Node.js, Express, TypeScript
-*   **Database:** MongoDB (likely with Mongoose)
-*   **Package Manager:** npm
-*   **Version Control:** Git
+*   **Frontend:** React 18, TypeScript 5, Material-UI (MUI) v5
+*   **Backend:** Node.js 20, Express 4.17, TypeScript 5, Jest 29
+*   **Database:** MongoDB 6 with Mongoose 7
+*   **Testing:** Jest, Supertest, React Testing Library
+*   **Tooling:** Vite 4, ESLint 8, Prettier 3
 
 ## 🤝 Contributing
 

@@ -69,11 +69,13 @@ const AdminCategories: React.FC = () => {
       const data = await res.json();
       if (!res.ok) {
         setError(data.message || 'Failed to fetch categories');
+        setCategories([]);
       } else {
-        setCategories(data);
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
       }
     } catch (err) {
       setError('Failed to fetch categories');
+      setCategories([]);
     }
     setLoading(false);
   };

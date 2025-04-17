@@ -35,4 +35,9 @@ const OrderSchema: Schema = new Schema<IOrder>(
   { timestamps: true }
 );
 
+// Add indexes for dashboard queries
+OrderSchema.index({ createdAt: -1 }); // For date-based queries and sorting
+OrderSchema.index({ user: 1 }); // For user-based lookups
+OrderSchema.index({ "products.product": 1 }); // For product-based aggregations
+
 export default mongoose.model<IOrder>('Order', OrderSchema); 

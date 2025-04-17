@@ -7,25 +7,17 @@ import adminMiddleware from '../utils/adminMiddleware';
 const router = express.Router();
 
 // Get all categories
-router.get('/', async (_req: Request, res: Response) => {
-  try {
-    const categories = await Category.find();
-    
-    // Get product count for each category
-    const categoriesWithCount = await Promise.all(
-      categories.map(async (category) => {
-        const productCount = await Product.countDocuments({ category: category._id });
-        return {
-          ...category.toObject(),
-          productCount
-        };
-      })
-    );
-    
-    res.json(categoriesWithCount);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
+router.get('/', async (req, res) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const skip = (page - 1) * limit;
+  const [categories, total] = await Promise.all([
+    Category.find({}, 'name description createdAt')
+      .skip(skip)
+      .limit(limit),
+    Category.countDocuments()
+  ]);
+  res.json({ categories, total, page, pages: Math.ceil(total / limit) });
 });
 
 // Get category by ID

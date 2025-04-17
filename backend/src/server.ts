@@ -13,7 +13,7 @@ import userRouter from './routes/users';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ecommerce';
 
 // Middleware
@@ -31,7 +31,9 @@ mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected successfully!');
-    app.listen(PORT, () => {
+    
+    // Try to start the server with intelligent port handling
+    const server = app.listen(PORT, () => {
       console.log(`✅ Express server running on port ${PORT}`);
       console.log('Registering routes:');
       console.log('  /api/health [GET]');
@@ -44,6 +46,41 @@ mongoose
       console.log('  /api/users [GET (admin), GET /:id (admin), PUT /:id (admin)]');
       console.log('  /api/users/me [GET]');
       console.log('Ready for requests!');
+    }).on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${PORT} is busy, trying ${PORT + 1}...`);
+        // Try the next port
+        const newServer = app.listen(PORT + 1, () => {
+          console.log(`✅ Express server running on port ${PORT + 1}`);
+          console.log('Registering routes:');
+          console.log('  /api/health [GET]');
+          console.log('  /api/auth [POST /register, POST /login]');
+          console.log('  /api/products [GET, GET /:id, POST, PUT /:id, DELETE /:id]');
+          console.log('  /api/categories [GET, GET /:id, POST, PUT /:id, DELETE /:id]');
+          console.log('  /api/orders [GET, POST]');
+          console.log('  /api/orders/all [GET] (admin)');
+          console.log('  /api/cart [GET, POST, DELETE]');
+          console.log('  /api/users [GET (admin), GET /:id (admin), PUT /:id (admin)]');
+          console.log('  /api/users/me [GET]');
+          console.log('Ready for requests!');
+        });
+        
+        // Set up graceful shutdown for the new server
+        process.on('SIGTERM', () => {
+          newServer.close(() => {
+            console.log('Process terminated');
+          });
+        });
+      } else {
+        console.error('❌ Server error:', err);
+      }
+    });
+    
+    // Set up graceful shutdown
+    process.on('SIGTERM', () => {
+      server.close(() => {
+        console.log('Process terminated');
+      });
     });
   })
   .catch((err) => {

@@ -23,4 +23,10 @@ const ProductSchema: Schema = new Schema<IProduct>(
   { timestamps: true }
 );
 
+// Add indexes for faster queries
+ProductSchema.index({ name: 1 });
+ProductSchema.index({ category: 1 });
+ProductSchema.index({ createdAt: -1 });
+ProductSchema.index({ price: 1 }); // For sorting and filtering by price
+
 export default mongoose.model<IProduct>('Product', ProductSchema); 

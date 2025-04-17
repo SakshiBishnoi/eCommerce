@@ -28,20 +28,23 @@ const AdminOrders: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/orders/all', {
+        const res = await fetch(`/api/orders/all?page=${page}&limit=20`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (!res.ok) {
           setError(data.message || 'Failed to fetch orders');
         } else {
-          setOrders(data);
+          setOrders(data.orders);
+          setTotalPages(data.pages);
         }
       } catch (err) {
         setError('Failed to fetch orders');
@@ -50,7 +53,7 @@ const AdminOrders: React.FC = () => {
     };
 
     fetchOrders();
-  }, []);
+  }, [page]);
 
   // Get all available status options from orders
   const statusOptions = ['all', ...new Set(orders.map(order => order.status))];
@@ -160,6 +163,12 @@ const AdminOrders: React.FC = () => {
               No orders found.
             </Box>
           )}
+          {/* Pagination Controls */}
+          <Flex justify="center" mt={4} gap={2}>
+            <Button onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+            <Box px={3} py={1} fontWeight="bold">Page {page} of {totalPages}</Box>
+            <Button onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
+          </Flex>
         </Box>
       )}
     </Box>

@@ -70,6 +70,8 @@ const AdminProducts: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   const { isOpen: isFormOpen, onOpen: onFormOpen, onClose: onFormClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
@@ -86,14 +88,10 @@ const AdminProducts: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/products', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`/api/products?page=${page}&limit=20`);
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || 'Failed to fetch products');
-      } else {
+      if (!res.ok) setError(data.message || 'Failed to fetch products');
+      else {
         // Transform the data to ensure consistent structure
         const formattedProducts = (data.products || data).map((product: any) => ({
           ...product,
@@ -101,6 +99,7 @@ const AdminProducts: React.FC = () => {
           category: product.category?._id || product.category
         }));
         setProducts(formattedProducts);
+        setTotalPages(Math.ceil(data.total / 20));
       }
     } catch (err) {
       setError('Failed to fetch products');
@@ -116,10 +115,11 @@ const AdminProducts: React.FC = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        setCategories(data);
+        setCategories(Array.isArray(data.categories) ? data.categories : []);
       }
     } catch (err) {
       console.error('Error fetching categories:', err);
+      setCategories([]);
     }
   };
 
@@ -413,6 +413,13 @@ const AdminProducts: React.FC = () => {
           )}
         </Box>
       )}
+
+      {/* Pagination Controls */}
+      <Flex justify="center" mt={4} gap={2}>
+        <Button onClick={() => setPage(page - 1)} disabled={page === 1}>Prev</Button>
+        <Box px={3} py={1} fontWeight="bold">Page {page} of {totalPages}</Box>
+        <Button onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</Button>
+      </Flex>
 
       {/* Product Form Modal */}
       <Modal isOpen={isFormOpen} onClose={onFormClose} size="xl">
