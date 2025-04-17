@@ -3,6 +3,8 @@ import Order from '../models/Order';
 import Cart from '../models/Cart';
 import authMiddleware from '../utils/authMiddleware';
 import adminMiddleware from '../utils/adminMiddleware';
+import User from '../models/User';
+import Product from '../models/Product';
 
 const router = express.Router();
 
@@ -65,6 +67,29 @@ router.put('/:id/status', authMiddleware, adminMiddleware, async (req: Request, 
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin: Dashboard summary endpoint
+router.get('/summary', authMiddleware, adminMiddleware, async (_req: Request, res: Response) => {
+  try {
+    const [totalOrders, totalUsers, totalProducts, orders] = await Promise.all([
+      Order.countDocuments(),
+      User.countDocuments(),
+      Product.countDocuments(),
+      Order.find().populate('user').sort({ createdAt: -1 })
+    ]);
+    const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+    const recentOrders = orders.slice(0, 5);
+    res.json({
+      totalOrders,
+      totalUsers,
+      totalRevenue,
+      totalProducts,
+      recentOrders
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch dashboard summary', error: err });
   }
 });
 

@@ -56,34 +56,31 @@ const AdminDashboard: React.FC = () => {
       setTimeout(() => navigate('/'), 2000);
       return;
     }
-    // Fetch all orders
-    const fetchOrders = async () => {
+    // Fetch dashboard summary
+    const fetchSummary = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch('/api/orders/all', {
+        const res = await fetch('/api/orders/summary', {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-        if (!res.ok) setError(data.message || 'Failed to fetch orders');
+        if (!res.ok) setError(data.message || 'Failed to fetch dashboard summary');
         else {
-          // Calculate stats from orders
-          const revenue = data.reduce((sum: number, order: any) => sum + (order.total || 0), 0);
-          
           setStats({
-            totalOrders: data.length,
-            totalUsers: 25, // mock data
-            totalRevenue: revenue,
-            totalProducts: 48, // mock data
-            recentOrders: data.slice(0, 5) // Last 5 orders
+            totalOrders: data.totalOrders,
+            totalUsers: data.totalUsers,
+            totalRevenue: data.totalRevenue,
+            totalProducts: data.totalProducts,
+            recentOrders: data.recentOrders || []
           });
         }
       } catch (err) {
-        setError('Failed to fetch orders');
+        setError('Failed to fetch dashboard summary');
       }
       setLoading(false);
     };
-    fetchOrders();
+    fetchSummary();
   }, [navigate]);
 
   const getStatusColor = (status: string) => {
