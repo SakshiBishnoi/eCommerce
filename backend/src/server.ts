@@ -36,11 +36,13 @@ mongoose
       console.log('Registering routes:');
       console.log('  /api/health [GET]');
       console.log('  /api/auth [POST /register, POST /login]');
-      console.log('  /api/products [GET, GET /:id, POST]');
-      console.log('  /api/categories [GET, POST]');
+      console.log('  /api/products [GET, GET /:id, POST, PUT /:id, DELETE /:id]');
+      console.log('  /api/categories [GET, GET /:id, POST, PUT /:id, DELETE /:id]');
       console.log('  /api/orders [GET, POST]');
-      console.log('  /api/cart [GET, POST]');
-      console.log('  /api/users [GET, GET /:id, PUT /:id]');
+      console.log('  /api/orders/all [GET] (admin)');
+      console.log('  /api/cart [GET, POST, DELETE]');
+      console.log('  /api/users [GET (admin), GET /:id (admin), PUT /:id (admin)]');
+      console.log('  /api/users/me [GET]');
       console.log('Ready for requests!');
     });
   })
